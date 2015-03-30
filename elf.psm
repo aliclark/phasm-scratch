@@ -1,0 +1,154 @@
+(std) -> {
+    U = std.U
+    Bin = std.Bin
+    Ascii = std.Ascii
+    Add = std.Add
+    Subtract = std.Subtract
+
+    elfclass = {
+        class_none = 0
+        class_32 = 1
+        class_64 = 2
+    }
+    elfdata = {
+        data_none = 0
+        data_2LSB = 1
+        data_2MSB = 2
+    }
+    ev = {
+        none    = 0
+        current = 1
+    }
+    osabi = {
+        sysv    = 0x00
+        hpux    = 0x01
+        netbsd  = 0x02
+        linux   = 0x03
+        solaris = 0x06
+        aix     = 0x07
+        irix    = 0x08
+        freebsd = 0x09
+        openbsd = 0x0C
+        openvms = 0x0D
+    }
+    et = {
+        none = 0
+        rel  = 1
+        exec = 2
+        dyn  = 3
+        core = 4
+    }
+    machine = {
+        sparc   = 0x02
+        x86     = 0x03
+        mips    = 0x08
+        ppc     = 0x14
+        arm     = 0x28
+        superh  = 0x2A
+        ia_64   = 0x32
+        x86_64  = 0x3E
+        aarch64 = 0xB7
+    }
+
+    # TODO: 64 bit
+    # TODO: noexec stack
+    # TODO: sections, should have:
+    # r-x text
+    # rw- stack
+    # rw- data
+    # r-- rodata
+
+    # Thanks to muppetlabs.com for the Whirlwind Tutorial on Creating
+    # Really Teensy ELF Executables for Linux :)
+    linux = (rodata, data, text) -> {
+        mem_offset = 0x08048000
+        binsize = Subtract(end, beginning)
+
+        ei_mag0       = 0x7F
+        ei_mag        = "ELF"
+        ei_class      = elfclass.class_32
+        ei_data       = elfdata.data_2LSB
+        ei_version    = ev.current
+        ei_osabi      = osabi.linux
+        ei_abiversion = 0
+        ei_pad        = U(7, 0)
+
+        e_type      = et.exec
+        e_machine   = machine.x86
+        e_version   = ei_version
+        e_entry     = Add(mem_offset, text_offset)
+        e_phoff     = Subtract(phdr, beginning)
+        e_shoff     = 0
+        e_flags     = 0
+        e_ehdrsize  = Subtract(phdr, ehdr)
+        e_phdrsize  = Subtract(rest, phdr)
+        e_phnum     = 1
+        e_shentsize = 0
+        e_shnum     = 0
+        e_shstrndx  = 0
+
+        p_type   = 1
+        p_offset = 0
+        p_vaddr  = mem_offset
+        p_paddr  = mem_offset
+        p_filesz = binsize
+        p_memsz  = binsize
+        p_flags  = 5
+        p_align  = 0x1000
+
+        :beginning:
+        :ehdr:
+        U(1,     ei_mag0)
+        Ascii(3, ei_mag)
+        U(1,     ei_class)
+        U(1,     ei_data)
+        U(1,     ei_version)
+        U(1,     ei_osabi)
+        U(1,     ei_abiversion)
+        Bin(7,   ei_pad)
+
+        U(2, e_type)
+        U(2, e_machine)
+        U(4, e_version)
+        U(4, e_entry)
+        U(4, e_phoff)
+        U(4, e_shoff)
+        U(4, e_flags)
+        U(2, e_ehdrsize)
+        U(2, e_phdrsize)
+        U(2, e_phnum)
+        U(2, e_shentsize)
+        U(2, e_shnum)
+        U(2, e_shstrndx)
+
+        :phdr:
+        U(4, p_type)
+        U(4, p_offset)
+        U(4, p_vaddr)
+        U(4, p_paddr)
+        U(4, p_filesz)
+        U(4, p_memsz)
+        U(4, p_flags)
+        U(4, p_align)
+
+        :rest:
+        repositioned_data   = WithPosition(Add(mem_offset, data_offset), data)
+        repositioned_rodata = WithPosition(Add(mem_offset, rodata_offset), rodata)
+
+        :text_offset:
+        WithPosition(Add(mem_offset, text_offset),
+                     text(repositioned_rodata, repositioned_data))
+
+        # FIXME: put these in actual sections
+        :rodata_offset:
+        rodata()
+
+        :data_offset:
+        data()
+
+        :shdr:
+        # TODO: section data here
+
+        :end:
+    }
+}

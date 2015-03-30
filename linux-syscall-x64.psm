@@ -1,0 +1,41 @@
+(std, asm) -> {
+    U = std.U
+    Bin = std.Bin
+
+    sys_exit  = 1
+    sys_write = 4
+
+    fd_stdout = 1
+
+    arg1 = (var) -> {
+        asm.mov_ebx(var)
+    }
+    arg2 = (var) -> {
+        asm.mov_ecx(var)
+    }
+    arg3 = (var) -> {
+        asm.mov_edx(var)
+    }
+
+    call = (num) -> {
+        sysnum = (var) -> {
+            asm.mov_eax(var)
+        }
+        sysint = Bin(2, "cd 80")
+
+        sysnum(num)
+        sysint()
+    }
+
+    exit = (status) -> {
+        arg1(U(4, status))
+        call(U(4, sys_exit))
+    }
+
+    write = (fd, address, length) -> {
+        arg1(U(4, fd))
+        arg2(U(4, address))
+        arg3(U(4, length))
+        call(U(4, sys_write))
+    }
+}

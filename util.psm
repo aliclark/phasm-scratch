@@ -1,0 +1,13 @@
+(std, sys) -> {
+    Ascii = std.Ascii
+    Utf8 = std.Utf8
+    AsciiLength = std.AsciiLength
+    Utf8Length = std.Utf8Length
+
+    ascii = (string) -> Ascii(AsciiLength(string), string)
+    utf8  = (string) -> Utf8( Utf8Length(string),  string)
+
+    print = (address, len) -> {
+        sys.write(sys.stdout, address, len)
+    }
+}
