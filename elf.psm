@@ -74,7 +74,6 @@
         maskproc = 0xFF000000
     }
 
-    # TODO: 64 bit
     # TODO: noexec stack
     # TODO: sections, should have:
     # r-x text
@@ -90,7 +89,7 @@
 
         ei_mag0       = 0x7F
         ei_mag        = "ELF"
-        ei_class      = elfclass.class_32
+        ei_class      = elfclass.class_64
         ei_data       = elfdata.data_2LSB
         ei_version    = ev.current
         ei_osabi      = osabi.linux
@@ -98,7 +97,7 @@
         ei_pad        = U(7, 0)
 
         e_type      = et.exec
-        e_machine   = machine.x86
+        e_machine   = machine.x86_64
         e_version   = ei_version
         e_entry     = Add(mem_offset, text_offset)
         e_phoff     = Subtract(phdr, beginning)
@@ -134,9 +133,9 @@
         U(2, e_type)
         U(2, e_machine)
         U(4, e_version)
-        U(4, e_entry)
-        U(4, e_phoff)
-        U(4, e_shoff)
+        U(8, e_entry)
+        U(8, e_phoff)
+        U(8, e_shoff)
         U(4, e_flags)
         U(2, e_ehdrsize)
         U(2, e_phdrsize)
@@ -147,13 +146,13 @@
 
         :phdr:
         U(4, p_type)
+        U(8, p_flags)
         U(4, p_offset)
-        U(4, p_vaddr)
-        U(4, p_paddr)
-        U(4, p_filesz)
-        U(4, p_memsz)
-        U(4, p_flags)
-        U(4, p_align)
+        U(8, p_vaddr)
+        U(8, p_paddr)
+        U(8, p_filesz)
+        U(8, p_memsz)
+        U(8, p_align)
 
         :rest:
         repositioned_data   = WithPosition(Add(mem_offset, data_offset), data)
