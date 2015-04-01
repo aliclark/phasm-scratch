@@ -57,6 +57,8 @@ loop = (n, code) -> {
 
 text = (rodata, data) -> {
 
+    # TODO: seccomp2 ourselves down to just sys_write and sys_exit
+
     loop(3, {
         sys.write(sys.fd_stdout, rodata.somestring2, 5)
     })
