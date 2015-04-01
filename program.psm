@@ -66,6 +66,11 @@ text = (rodata, data) -> {
     })
 
     sys.exit(43)
+
+    # signal to the user that this process should be terminated, if
+    # not already done so
+    :terminated:
+    jmp_1b(terminated)
 }
 
 elf.linux(rodata, data, text)
