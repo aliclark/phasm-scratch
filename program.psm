@@ -8,6 +8,15 @@ abstract_sys  = Import("linux-syscall-x64")
 abstract_do   = Import("do")
 abstract_util = Import("util")
 
+# TODO:
+#std = Import("gh:aliclark/phasm-scratch/master/std.py")
+#asm = Import("gh:aliclark/phasm-scratch/master/asm_x64.py")
+#
+#abstract_elf  = Import("gh:aliclark/phasm-scratch/master/elf.psm")
+#abstract_sys  = Import("gh:aliclark/phasm-scratch/master/linux-syscall-x64.psm")
+#abstract_do   = Import("gh:aliclark/phasm-scratch/master/do.psm")
+#abstract_util = Import("gh:aliclark/phasm-scratch/master/util.psm")
+
 elf  = abstract_elf(std)
 sys  = abstract_sys(std, asm)
 do   = abstract_do(asm)
