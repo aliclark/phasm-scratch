@@ -28,8 +28,11 @@
         aix     = 0x07
         irix    = 0x08
         freebsd = 0x09
+        tru64   = 0x0A
+        modesto = 0x0B
         openbsd = 0x0C
         openvms = 0x0D
+        nsk     = 0x0E
     }
     et = {
         none = 0
