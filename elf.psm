@@ -53,6 +53,27 @@
         aarch64 = 0xB7
     }
 
+    pt = {
+        null    = 0
+        load    = 1
+        dynamic = 2
+        interp  = 3
+        note    = 4
+        shlib   = 5
+        phdr    = 6
+        loos    = 0x60000000
+        hios    = 0x6FFFFFFF
+        loproc  = 0x70000000
+        hiproc  = 0x7FFFFFFF
+    }
+    pf = {
+        x = 0x1
+        w = 0x2
+        r = 0x4
+        maskos   = 0x00FF0000
+        maskproc = 0xFF000000
+    }
+
     # TODO: 64 bit
     # TODO: noexec stack
     # TODO: sections, should have:
@@ -90,13 +111,13 @@
         e_shnum     = 0
         e_shstrndx  = 0
 
-        p_type   = 1
+        p_type   = pt.load
         p_offset = 0
         p_vaddr  = mem_offset
         p_paddr  = mem_offset
         p_filesz = binsize
         p_memsz  = binsize
-        p_flags  = 5
+        p_flags  = Add(pf.x, pf.r)
         p_align  = 0x1000
 
         :beginning:
