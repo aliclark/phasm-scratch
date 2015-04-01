@@ -27,22 +27,30 @@ data = {
     :space:   Bin(8, "00 00 00 00 00 00 00 00")
 }
 
+jge_1b = (to) -> {
+    asm.jge_1b(from, to)
+    :from:
+}
+jmp_1b = (to) -> {
+    asm.jmp_1b(from, to)
+    :from:
+}
+
 # n can be up to 256
 loop = (n, code) -> {
     asm.mov_eax(U(4, 0))
 
     :loop:
     asm.cmp_eax_1b(n)
-    asm.jge_1b(cont, end)
+    jge_1b(end)
 
-    :cont:
     asm.push_rax()
 
     code()
 
     asm.pop_rax()
     asm.add_eax_1b(1)
-    asm.jmp_1b(end, loop)
+    jmp_1b(loop)
 
     :end:
 }
