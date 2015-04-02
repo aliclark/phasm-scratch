@@ -1,13 +1,38 @@
-(std, sys) -> {
-    Ascii = std.Ascii
-    Utf8 = std.Utf8
-    AsciiLength = std.AsciiLength
-    Utf8Length = std.Utf8Length
+(std, asm, sys) -> {
 
-    ascii = (string) -> Ascii(AsciiLength(string), string)
-    utf8  = (string) -> Utf8( Utf8Length(string),  string)
+    ascii = (string) -> {
+        str = string
+        len = std.AsciiLength(string)
+        bin = std.Ascii(len, str)
+        bin
+    }
+
+    utf8 = (string) -> {
+        str = string
+        len = std.Utf8Length(string)
+        bin = std.Utf8(len, str)
+        bin
+    }
 
     print = (address, len) -> {
         sys.write(sys.stdout, address, len)
+    }
+
+    loop = (n, code) -> {
+        asm.mov_eax(0)
+
+        :loop:
+        asm.cmp_eax_1b(n)
+        asm.jge_1b(end)
+
+        asm.push_rax()
+
+        code()
+
+        asm.pop_rax()
+        asm.add_eax_1b(1)
+        asm.jmp_1b(loop)
+
+        :end:
     }
 }

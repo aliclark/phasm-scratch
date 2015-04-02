@@ -119,6 +119,9 @@
         p_flags  = Add(pf.x, pf.r)
         p_align  = 0x1000
 
+
+        # TODO: dump these in terms of the spec's terminology
+
         :beginning:
         :ehdr:
         U(1,     ei_mag0)

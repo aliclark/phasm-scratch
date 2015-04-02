@@ -1,0 +1,23 @@
+(std) -> {
+    b = (x) -> std.U(1, x)
+
+    mov_eax = (var) -> { b(0xb8); std.U(4, var) }
+    mov_ecx = (var) -> { b(0xb9); std.U(4, var) }
+    mov_edx = (var) -> { b(0xba); std.U(4, var) }
+    mov_ebx = (var) -> { b(0xbb); std.U(4, var) }
+
+    push_rax = b(0x50)
+    pop_rax  = b(0x58)
+
+    cmp_eax_1b = (var) -> { b(0x83); b(0xF8); b(var) }
+    add_eax_1b = (var) -> { b(0x83); b(0xC0); b(var) }
+
+    jge_1b = (dest) -> {
+        b(0x7D); std.S(1, std.Subtract(dest, curpos))
+        :curpos:
+    }
+    jmp_1b = (dest) -> {
+        b(0xEB); std.S(1, std.Subtract(dest, curpos))
+        :curpos:
+    }
+}

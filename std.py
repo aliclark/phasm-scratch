@@ -99,7 +99,7 @@ def builtin_U(ix, jx):
     if not jx['final']:
         return e_needs_work(ix['data'])
     if ix['type'] != E_INTEGER or jx['type'] != E_INTEGER:
-        raise Exception("U takes Integer, Integer arguments")
+        raise Exception("U takes Integer, Integer arguments, got " + str(ix) + ", " + str(jx))
     if ix['data'] < 0:
         raise Exception("Bitsize must be non-negative")
     if jx['data'] < 0:
@@ -110,6 +110,44 @@ def builtin_U(ix, jx):
     out = []
     bytes_rem = ix['data']
     bs = hex(jx['data'])[2:]
+    if len(bs) % 2 != 0:
+        bs = '0' + bs
+    for i in reversed(range(0, len(bs), 2)):
+        byt = int(bs[i:i+2], 16)
+        out.append(byt)
+        bytes_rem -= 1
+
+    while bytes_rem > 0:
+        out.append(0)
+        bytes_rem -= 1
+
+    return e_bin_raw(ix['data'], out)
+
+# Like U, but handles negative numbers with 2's complement
+def builtin_S(ix, jx):
+    if not ix['final']:
+        return e_needs_work()
+    if not jx['final']:
+        return e_needs_work(ix['data'])
+    if ix['type'] != E_INTEGER or jx['type'] != E_INTEGER:
+        raise Exception("S takes Integer, Integer arguments")
+    if ix['data'] < 0:
+        raise Exception("Bitsize must be non-negative")
+
+    if jx['data'] >= 2**((ix['data']*8)-1):
+        raise Exception("Argument is too big for the space")
+    if jx['data'] <  -1 * (2**((ix['data']*8)-1)):
+        raise Exception("Argument is too negative for the space, " + str(jx))
+
+    num = jx['data']
+
+    if num < 0:
+        num = (1 << ix['data']*8) + num
+
+    out = []
+    bytes_rem = ix['data']
+    bs = hex(num)[2:]
+
     if len(bs) % 2 != 0:
         bs = '0' + bs
     for i in reversed(range(0, len(bs), 2)):
@@ -147,6 +185,7 @@ def builtin_Subtract(ix, jx):
 
 builtins_std = e_block([
     ('U', e_builtin_func(2, builtin_U)),
+    ('S', e_builtin_func(2, builtin_S)),
     ('Bin', e_builtin_func(2, builtin_Bin)),
     ('Ascii', e_builtin_func(2, builtin_Ascii)),
     ('AsciiLength', e_builtin_func(1, builtin_AsciiLength)),
