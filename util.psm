@@ -15,7 +15,7 @@
     }
 
     print = (address, len) -> {
-        sys.write(sys.stdout, address, len)
+        sys.write(sys.fd_stdout, address, len)
     }
 
     loop = (n, code) -> {

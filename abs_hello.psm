@@ -2,33 +2,28 @@
 (std, asm, elf, sys, util) -> {
 
     rodata = {
-        lalala      = util.utf8("lalala\n")
         hello_world = util.utf8("Hello, world!\n")
-        hiya        = util.utf8("hiya\n")
+        bye         = util.utf8("bye!\n")
 
-        :lalala_addr:      lalala
         :hello_world_addr: hello_world
-        :hiya_addr:        hiya
+        :bye_addr:         bye
     }
 
     data = {
         :counter: std.U(8, 0)
-        :space:   std.Bin(8, "00 00 00 00 00 00 00 00")
     }
 
     text = (rodata, data) -> {
 
         # TODO: seccomp2 ourselves down to just sys_write and sys_exit
 
-        util.loop(3, {
-            sys.write(sys.fd_stdout, rodata.hiya_addr, rodata.hiya.len)
-        })
+        util.print(rodata.hello_world_addr, rodata.hello_world.len)
 
         util.loop(2, {
-            sys.write(sys.fd_stdout, rodata.lalala_addr, rodata.lalala.len)
+            util.print(rodata.bye_addr, rodata.bye.len)
         })
 
-        sys.exit(43)
+        sys.exit(42)
 
         # signal to the user that this process should be terminated, if
         # not already done so
