@@ -82,8 +82,8 @@
 
     # Thanks to muppetlabs.com for the Whirlwind Tutorial on Creating
     # Really Teensy ELF Executables for Linux :)
-    linux = (rodata, data, text) -> {
-        mem_offset = 0x08048000
+    linux_x64 = (rodata, data, text) -> {
+        mem_offset = 0x00400000
         binsize = Subtract(end, beginning)
 
         repositioned_rodata = WithPosition(Add(mem_offset, rodata_offset), rodata)

@@ -36,5 +36,5 @@
         })
     }
 
-    elf.linux(rodata, data, text)
+    elf.linux_x64(rodata, data, text)
 }
