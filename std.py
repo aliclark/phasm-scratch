@@ -1,4 +1,5 @@
 
+import re
 import string
 
 from common import *
@@ -130,7 +131,7 @@ def builtin_S(ix, jx):
     if not jx['final']:
         return e_needs_work(ix['data'])
     if ix['type'] != E_INTEGER or jx['type'] != E_INTEGER:
-        raise Exception("S takes Integer, Integer arguments")
+        raise Exception("S takes Integer, Integer arguments, got " + str(ix) + ", " + str(jx))
     if ix['data'] < 0:
         raise Exception("Bitsize must be non-negative")
 
@@ -182,6 +183,104 @@ def builtin_Subtract(ix, jx):
         raise Exception("Subtract takes Integer, Integer arguments")
     return e_integer(ix['data'] - jx['data'])
 
+nop = 0x90
+
+mov_reg = {
+    'rax': 0xb8,
+    'rcx': 0xb9,
+    'rdx': 0xba,
+    'rbx': 0xbb,
+}
+
+rbp_arg = re.compile(r'\[rbp\+(?P<mul>[0-9]+)\]')
+
+rbp_dst_reg = {
+    'rcx': 0x4d,
+    'rdx': 0x55,
+    'rsi': 0x75,
+    'rdi': 0x7d,
+}
+
+def builtin_mov(dx, sx):
+    if not dx['final'] or not sx['final']:
+        return e_needs_work(5)
+
+    if dx['type'] == E_STRING and sx['type'] == E_STRING:
+        if dx['data'] == 'rbp' and sx['data'] == 'rsp':
+            return e_bin_raw(5, [0x48, 0x89, 0xe5, nop, nop])
+        if dx['data'] == 'rsp' and sx['data'] == 'rbp':
+            return e_bin_raw(5, [0x48, 0x89, 0xec, nop, nop])
+
+        m = rbp_arg.match(sx['data'])
+        if m:
+            start = [0x48, 0x8b]
+            if dx['data'] not in rbp_dst_reg:
+                raise Exception("Unknown rbp offset dest reg")
+            if m.group('mul') in ('16', '24'):
+                mul = int(m.group('mul'))
+            else:
+                raise Exception("Unknown rbp offset mul")
+            return e_bin_raw(4, start + [rbp_dst_reg[dx['data']], mul])
+
+    if dx['type'] == E_STRING and sx['type'] == E_INTEGER:
+        src = builtin_S(e_integer(4), sx)
+        if dx['data'] not in mov_reg:
+            raise Exception("Unknown mov register " + str(dx))
+        return e_bin_raw(5, [mov_reg[dx['data']]] + src['data'])
+
+    raise Exception("Unknown mov type")
+
+push_reg = {
+    'rax': 0x50,
+    'rcx': 0x51,
+    'rdx': 0x52,
+    'rbx': 0x53,
+
+    'rbp': 0x55,
+    'rsi': 0x56,
+    'rdi': 0x57,
+}
+
+def builtin_push(sx):
+    if not sx['final']:
+        return e_needs_work(5)
+
+    if sx['type'] == E_STRING:
+        if sx['data'] not in push_reg:
+            raise Exception("Unknown push register " + str(sx))
+        return e_bin_raw(5, [push_reg[sx['data']], nop, nop, nop, nop])
+
+    if sx['type'] == E_INTEGER:
+        if sx['data'] < -128 or sx['data'] > 127:
+            src = builtin_S(e_integer(4), sx)
+            return e_bin_raw(5, [0x68] + src['data'])
+        else:
+            src = builtin_S(e_integer(1), sx)
+            return e_bin_raw(5, [0x6a] + src['data'] + [nop, nop, nop])
+
+    raise Exception("Unknown push type")
+
+pop_reg = {
+    'rax': 0x58,
+    'rcx': 0x59,
+    'rdx': 0x5a,
+    'rbx': 0x5b,
+
+    'rbp': 0x5d,
+    'rsi': 0x5e,
+    'rdi': 0x5f,
+}
+
+def builtin_pop(dx):
+    if not dx['final']:
+        return e_needs_work(1)
+
+    if dx['type'] == E_STRING:
+        if dx['data'] not in pop_reg:
+            raise Exception("Unknown pop register " + str(dx))
+        return e_bin_raw(1, [pop_reg[dx['data']]])
+
+    raise Exception("Unknown pop type")
 
 builtins_std = e_block([
     ('U', e_builtin_func(2, builtin_U)),
@@ -193,6 +292,9 @@ builtins_std = e_block([
     ('Utf8Length', e_builtin_func(1, builtin_Utf8Length)),
     ('Add', e_builtin_func(2, builtin_Add)),
     ('Subtract', e_builtin_func(2, builtin_Subtract)),
+    ('mov', e_builtin_func(2, builtin_mov)),
+    ('push', e_builtin_func(1, builtin_push)),
+    ('pop', e_builtin_func(1, builtin_pop)),
 ],
                        e_bin_concat([]))
 

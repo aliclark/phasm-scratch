@@ -4,29 +4,27 @@
 
     fd_stdout = 1
 
-    # FIXME: cannot use curried form because non-closing over env
-    # variables in the block
-    arg1 = (var) -> asm.mov_ebx(var)
-    arg2 = (var) -> asm.mov_ecx(var)
-    arg3 = (var) -> asm.mov_edx(var)
-
     call = (num) -> {
-        sysnum = (var) -> asm.mov_eax(var)
-        sysint = std.Bin(2, "cd 80")
+        asm.mov("rax", num)
+        std.Bin(2, "cd 80")
+    }
 
-        sysnum(num)
-        sysint()
+    call1 = (num, v1) -> {
+        asm.mov("rbx", v1)
+        call(num)
+    }
+
+    call3 = (num, v1, v2, v3) -> {
+        asm.mov("rdx", v3)
+        asm.mov("rcx", v2)
+        asm.mov("rbx", v1)
+        call(num)
     }
 
     exit = (status) -> {
-        arg1(status)
-        call(sys_exit)
+        call1(sys_exit, status)
     }
-
     write = (fd, address, length) -> {
-        arg1(fd)
-        arg2(address)
-        arg3(length)
-        call(sys_write)
+        call3(sys_write, fd, address, length)
     }
 }

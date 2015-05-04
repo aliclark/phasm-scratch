@@ -4,14 +4,16 @@ std = Import("gh:aliclark/phasm-scratch/master/std.py")
 
 abstract_asm   = Import("gh:aliclark/phasm-scratch/master/asm_x64.psm")
 abstract_elf   = Import("gh:aliclark/phasm-scratch/master/elf.psm")
+abstract_proc  = Import("gh:aliclark/phasm-scratch/master/proc.psm")
 abstract_sys   = Import("gh:aliclark/phasm-scratch/master/linux-syscall-x64.psm")
 abstract_util  = Import("gh:aliclark/phasm-scratch/master/util.psm")
 abstract_hello = Import("gh:aliclark/phasm-scratch/master/abs_hello.psm")
 
 asm  = abstract_asm(std)
 elf  = abstract_elf(std)
+proc = abstract_proc(asm)
 sys  = abstract_sys(std, asm)
 util = abstract_util(std, asm, sys)
 
 # writing the rest of the program shall be George's problem.
-abstract_hello(std, asm, elf, sys, util)
+abstract_hello(std, asm, elf, proc, sys, util)

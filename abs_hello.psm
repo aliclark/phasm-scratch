@@ -1,5 +1,5 @@
 
-(std, asm, elf, sys, util) -> {
+(std, asm, elf, proc, sys, util) -> {
 
     rodata = {
         hello_world = util.utf8("Hello, world!\n")
@@ -7,6 +7,10 @@
 
         :hello_world_addr: hello_world
         :bye_addr:         bye
+
+	# TODO: new syntax
+        # :hello_world: = util.utf8("Hello, world!\n")
+        # :bye:         = util.utf8("bye!\n")
     }
 
     data = {
@@ -14,21 +18,22 @@
     }
 
     text = (rodata, data) -> {
+        :start: {
+            # TODO: seccomp2 ourselves down to just sys_write and sys_exit
 
-        # TODO: seccomp2 ourselves down to just sys_write and sys_exit
+            util.loop(3, {
+                proc.call2(print, rodata.hello_world_addr, rodata.hello_world.size)
+            })
+            proc.call2(print, rodata.bye_addr, rodata.bye.size)
+            sys.exit(42)
+        }
 
-        util.print(rodata.hello_world_addr, rodata.hello_world.len)
-
-        util.loop(2, {
-            util.print(rodata.bye_addr, rodata.bye.len)
+        :print: proc.sub({
+            asm.mov("rbx", sys.fd_stdout)
+            asm.mov("rcx", "[rbp+16]")
+            asm.mov("rdx", "[rbp+24]")
+            sys.call(sys.sys_write)
         })
-
-        sys.exit(42)
-
-        # signal to the user that this process should be terminated, if
-        # not already done so
-        :terminated:
-        asm.jmp_1b(terminated)
     }
 
     elf.linux(rodata, data, text)

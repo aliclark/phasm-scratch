@@ -1,37 +1,51 @@
 (std, asm, sys) -> {
 
+    # library code should prefer passing around these (or these but
+    # with the label number instead of raw bin as value)
+
     ascii = (string) -> {
         str = string
-        len = std.AsciiLength(string)
-        bin = std.Ascii(len, str)
+        size = std.AsciiLength(string)
+        bin = std.Ascii(size, str)
         bin
     }
 
     utf8 = (string) -> {
         str = string
-        len = std.Utf8Length(string)
-        bin = std.Utf8(len, str)
+        size = std.Utf8Length(string)
+        bin = std.Utf8(size, str)
         bin
     }
 
-    print = (address, len) -> {
-        sys.write(sys.fd_stdout, address, len)
+    "Maybe even a similar concept for numbers:
+    i32 = (n) -> {
+        num = n
+        size = 4
+        bin = std.S(4, n)
+        bin
+    }
+"
+
+    print = (address, size) -> {
+        sys.write(sys.fd_stdout, address, size)
     }
 
     loop = (n, code) -> {
-        asm.mov_eax(0)
+        asm.push("rax")
+        asm.mov("rax", 0)
 
         :loop:
-        asm.cmp_eax_1b(n)
-        asm.jge_1b(end)
+        asm.cmp_rax_s8(n)
+        asm.jge_s8(end)
 
-        asm.push_rax()
+        asm.push("rax")
 
         code()
 
-        asm.pop_rax()
-        asm.add_eax_1b(1)
-        asm.jmp_1b(loop)
+        asm.pop("rax")
+
+        asm.add_rax_s8(1)
+        asm.jmp_s8(loop)
 
         :end:
     }

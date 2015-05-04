@@ -1,6 +1,5 @@
 (std) -> {
     U = std.U
-    Bin = std.Bin
     Ascii = std.Ascii
     Add = std.Add
     Subtract = std.Subtract
@@ -87,6 +86,11 @@
         mem_offset = 0x08048000
         binsize = Subtract(end, beginning)
 
+        repositioned_rodata = WithPosition(Add(mem_offset, rodata_offset), rodata)
+        repositioned_data   = WithPosition(Add(mem_offset, data_offset),   data)
+        repositioned_text   = WithPosition(Add(mem_offset, text_offset),
+                                           text(repositioned_rodata, repositioned_data))
+
         ei_mag0       = 0x7F
         ei_mag        = "ELF"
         ei_class      = elfclass.class_64
@@ -99,7 +103,7 @@
         e_type      = et.exec
         e_machine   = machine.x86_64
         e_version   = ei_version
-        e_entry     = Add(mem_offset, text_offset)
+        e_entry     = repositioned_text.start
         e_phoff     = Subtract(phdr, beginning)
         e_shoff     = 0
         e_flags     = 0
@@ -119,19 +123,16 @@
         p_flags  = Add(pf.x, pf.r)
         p_align  = 0x1000
 
-
-        # TODO: dump these in terms of the spec's terminology
-
         :beginning:
         :ehdr:
-        U(1,     ei_mag0)
-        Ascii(3, ei_mag)
-        U(1,     ei_class)
-        U(1,     ei_data)
-        U(1,     ei_version)
-        U(1,     ei_osabi)
-        U(1,     ei_abiversion)
-        Bin(7,   ei_pad)
+        U(1,       ei_mag0)
+        Ascii(3,   ei_mag)
+        U(1,       ei_class)
+        U(1,       ei_data)
+        U(1,       ei_version)
+        U(1,       ei_osabi)
+        U(1,       ei_abiversion)
+        std.Bin(7, ei_pad)
 
         U(2, e_type)
         U(2, e_machine)
@@ -158,12 +159,9 @@
         U(8, p_align)
 
         :rest:
-        repositioned_data   = WithPosition(Add(mem_offset, data_offset), data)
-        repositioned_rodata = WithPosition(Add(mem_offset, rodata_offset), rodata)
 
         :text_offset:
-        WithPosition(Add(mem_offset, text_offset),
-                     text(repositioned_rodata, repositioned_data))
+        repositioned_text()
 
         # FIXME: put these in actual sections
         :rodata_offset:
@@ -176,5 +174,62 @@
         # TODO: section data here
 
         :end:
+
+"
+        # i'd like to move to something a bit simpler. needs:
+        # a) ':label: = block' style assignments
+        # a.i) with the block's label values fully placed
+        # b) out-of-order label label references, at least
+
+        # How does relocatable code work, and importing libraries?
+
+        WithPosition(0x08048000, {
+            # ELF header in here
+
+            # pass back the placed copies of the blocks so label
+            # values can be used
+            text(placed_rodata, placed_data, placed_bss)
+
+            # any labels accessed via these blocks' vars would have
+            # the correct label placement values
+            :placed_rodata: = rodata()
+            :placed_data:   = data()
+            :placed_bss:    = bss()
+        })
+
+        # this pattern could be quite useful
+        block = {
+            len = Subtract(end, start)
+            #...vars...
+            :start:
+            #...contents...
+            :end:
+        }
+"
+
+        # XXX: actually, this may not be helpful when it comes to
+        # putting data in sections anyway?
+        #
+        # The sections should be close together, though bear in mind
+        # I'll have to align their start point with some 0s, probably
+        # to nearest 4 bytes.
+        #
+        # This situation is closer to
+"
+            text(placed_rodata, placed_data, placed_bss)
+
+            aligner()
+            :placed_rodata: = rodata()
+"
+    # how on earth to implement aligner() I don't know.
+    # A semi-lame way is to do this.
+"
+            std.pad_modulo(4, text(placed_rodata, placed_data, placed_bss))
+
+            :placed_rodata: = rodata()
+"
+    # Now when the length of text becomes known, we simply round up to
+    # the nearest multiple of 4, appending zeroes.
+
     }
 }

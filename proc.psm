@@ -1,0 +1,91 @@
+
+(asm) -> {
+
+    # the caller prologue just saves registers that might be trashed.
+    caller_prologue = {
+	#asm.push("rdx")
+	#asm.push("rcx")
+        #asm.push("rsi")
+        #asm.push("rdi")
+    }
+
+    # restore the potentially trashed registers
+    caller_epilogue = {
+        #asm.pop("rdi")
+        #asm.pop("rsi")
+	#asm.pop("rcx")
+	#asm.pop("rdx")
+    }
+
+    call0 = (addr) -> {
+        caller_prologue()
+	asm.callq_s32(addr)
+        caller_epilogue()
+    }
+
+    call1 = (addr, v1) -> {
+        caller_prologue()
+
+	asm.pushq(v1)
+	asm.callq_s32(addr)
+        asm.add_rsp_s8(8)
+
+        caller_epilogue()
+    }
+
+    call2 = (addr, v1, v2) -> {
+        caller_prologue()
+
+	asm.push(v2)
+	asm.push(v1)
+	asm.callq_s32(addr)
+        asm.add_rsp_s8(16)
+
+        caller_epilogue()
+    }
+
+    call3 = (addr, v1, v2, v3) -> {
+        caller_prologue()
+
+	asm.push(v3)
+	asm.push(v2)
+	asm.push(v1)
+	asm.call(addr)
+        asm.add_rsp_s8(24)
+
+        caller_epilogue()
+    }
+
+    start = {
+	asm.push("rbp")
+	asm.mov("rbp", "rsp")
+
+        #asm.push("rbx")
+        #asm.push("r12")
+        #asm.push("r13")
+        #asm.push("r14")
+        #asm.push("r15")
+    }
+
+    ret = {
+        #asm.pop("r15")
+        #asm.pop("r14")
+        #asm.pop("r13")
+        #asm.pop("r12")
+        #asm.pop("rbx")
+
+	asm.mov("rsp", "rbp")
+        asm.pop("rbp")
+        asm.retq()
+    }
+
+    sub = (code) -> {
+        start()
+        code()
+        ret()
+    }
+
+    # XXX: Hopefully in future I can supply a "call" method on here
+    # that knows we take 2 args
+    #sub2 = sub
+}
