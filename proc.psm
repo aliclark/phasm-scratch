@@ -87,5 +87,5 @@
 
     # XXX: Hopefully in future I can supply a "call" method on here
     # that knows we take 2 args
-    #sub2 = sub
+    sub2 = sub
 }

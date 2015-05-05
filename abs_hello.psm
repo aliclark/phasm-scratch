@@ -1,6 +1,9 @@
 
 (std, asm, elf, proc, sys, util) -> {
 
+    bytes = (n) -> std.U(n, 0)
+    type = (block) -> WithPosition(0, block)
+
     rodata = {
         hello_world = util.utf8("Hello, world!\n")
         bye         = util.utf8("bye!\n")
@@ -14,21 +17,41 @@
     }
 
     data = {
-        :counter: std.U(8, 0)
+        :verbose: std.U(1, 0)
     }
 
-    text = (rodata, data) -> {
+    ptr_new = bytes(8)
+    ptr_t = type(ptr_new)
+
+    list_new = {
+        :value: ptr_new
+        :next:  ptr_new
+    }
+    # eg. std.sizeof(list_t)
+    list_t = type(list_new)
+
+    bss = {
+        :counter: bytes(8)
+        #:big_obj: bytes(128)
+        :my_foo_list: list_new
+    }
+
+    text = (rodata, data, bss) -> {
         :start: {
             # TODO: seccomp2 ourselves down to just sys_write and sys_exit
 
-            util.loop(3, {
+            util.loop(2, {
                 proc.call2(print, rodata.hello_world_addr, rodata.hello_world.size)
             })
             proc.call2(print, rodata.bye_addr, rodata.bye.size)
+
+            # XXX: after new syntax:
+            # print.call(rodata.bye, rodata.bye.size)
+
             sys.exit(42)
         }
 
-        :print: proc.sub({
+        :print: proc.sub2({
             asm.mov("rbx", sys.fd_stdout)
             asm.mov("rcx", "[rbp+16]")
             asm.mov("rdx", "[rbp+24]")
@@ -36,5 +59,5 @@
         })
     }
 
-    elf.linux_x64(rodata, data, text)
+    elf.linux_x64(rodata, data, bss, text)
 }

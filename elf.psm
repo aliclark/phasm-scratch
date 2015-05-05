@@ -1,8 +1,9 @@
 (std) -> {
     U = std.U
-    Ascii = std.Ascii
     Add = std.Add
     Subtract = std.Subtract
+    #`+` = std.Add
+    #`-` = std.Subtract
 
     elfclass = {
         class_none = 0
@@ -78,18 +79,21 @@
     # r-x text
     # rw- stack
     # rw- data
+    # rw- bss
     # r-- rodata
 
     # Thanks to muppetlabs.com for the Whirlwind Tutorial on Creating
     # Really Teensy ELF Executables for Linux :)
-    linux_x64 = (rodata, data, text) -> {
+    linux_x64 = (rodata, data, bss, text) -> {
         mem_offset = 0x00400000
         binsize = Subtract(end, beginning)
 
         repositioned_rodata = WithPosition(Add(mem_offset, rodata_offset), rodata)
         repositioned_data   = WithPosition(Add(mem_offset, data_offset),   data)
+        repositioned_bss    = WithPosition(Add(mem_offset, bss_offset),    bss)
+        # TODO: bss
         repositioned_text   = WithPosition(Add(mem_offset, text_offset),
-                                           text(repositioned_rodata, repositioned_data))
+                                           text(repositioned_rodata, repositioned_data, repositioned_bss))
 
         ei_mag0       = 0x7F
         ei_mag        = "ELF"
@@ -125,14 +129,14 @@
 
         :beginning:
         :ehdr:
-        U(1,       ei_mag0)
-        Ascii(3,   ei_mag)
-        U(1,       ei_class)
-        U(1,       ei_data)
-        U(1,       ei_version)
-        U(1,       ei_osabi)
-        U(1,       ei_abiversion)
-        std.Bin(7, ei_pad)
+        U(1,         ei_mag0)
+        std.Ascii(3, ei_mag)
+        U(1,         ei_class)
+        U(1,         ei_data)
+        U(1,         ei_version)
+        U(1,         ei_osabi)
+        U(1,         ei_abiversion)
+        std.Bin(7,   ei_pad)
 
         U(2, e_type)
         U(2, e_machine)
@@ -170,6 +174,10 @@
         :data_offset:
         data()
 
+        # TODO: properly
+        :bss_offset:
+        bss()
+
         :shdr:
         # TODO: section data here
 
@@ -181,48 +189,20 @@
         # a.i) with the block's label values fully placed
         # b) out-of-order label label references, at least
 
-        # How does relocatable code work, and importing libraries?
-
-        WithPosition(0x08048000, {
+        WithPosition(0x00400000, {
             # ELF header in here
 
             # pass back the placed copies of the blocks so label
             # values can be used
-            text(placed_rodata, placed_data, placed_bss)
+            :placed_text: = text(placed_rodata, placed_data)
 
             # any labels accessed via these blocks' vars would have
             # the correct label placement values
             :placed_rodata: = rodata()
             :placed_data:   = data()
-            :placed_bss:    = bss()
         })
-
-        # this pattern could be quite useful
-        block = {
-            len = Subtract(end, start)
-            #...vars...
-            :start:
-            #...contents...
-            :end:
-        }
 "
 
-        # XXX: actually, this may not be helpful when it comes to
-        # putting data in sections anyway?
-        #
-        # The sections should be close together, though bear in mind
-        # I'll have to align their start point with some 0s, probably
-        # to nearest 4 bytes.
-        #
-        # This situation is closer to
-"
-            text(placed_rodata, placed_data, placed_bss)
-
-            aligner()
-            :placed_rodata: = rodata()
-"
-    # how on earth to implement aligner() I don't know.
-    # A semi-lame way is to do this.
 "
             std.pad_modulo(4, text(placed_rodata, placed_data, placed_bss))
 

@@ -15,5 +15,4 @@ proc = abstract_proc(asm)
 sys  = abstract_sys(std, asm)
 util = abstract_util(std, asm, sys)
 
-# writing the rest of the program shall be George's problem.
 abstract_hello(std, asm, elf, proc, sys, util)
