@@ -19,9 +19,9 @@
         }
 
         :print: proc.sub2({
-            asm.mov("rbx", sys.fd_stdout)
-            asm.mov("rcx", "[rbp+16]")
             asm.mov("rdx", "[rbp+24]")
+            asm.mov("rcx", "[rbp+16]")
+            asm.mov("rbx", sys.fd_stdout)
             sys.call(sys.sys_write)
         })
     }
