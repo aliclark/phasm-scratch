@@ -1,13 +1,13 @@
 #!/usr/bin/env phasm
 
-std = Import("gh:aliclark/phasm-scratch/0.1/std.py")
+std = Import("gh:aliclark/phasm-scratch/0.2/std.py")
 
-abs_asm   = Import("gh:aliclark/phasm-scratch/0.1/asm-x64.psm")
-abs_elf   = Import("gh:aliclark/phasm-scratch/0.1/elf.psm")
-abs_proc  = Import("gh:aliclark/phasm-scratch/0.1/proc.psm")
-abs_sys   = Import("gh:aliclark/phasm-scratch/0.1/syscall-linux-x64.psm")
-abs_util  = Import("gh:aliclark/phasm-scratch/0.1/util.psm")
-abs_hello = Import("gh:aliclark/phasm-scratch/0.1/hello.psm")
+abs_asm   = Import("gh:aliclark/phasm-scratch/0.2/asm-x64.psm")
+abs_elf   = Import("gh:aliclark/phasm-scratch/0.2/elf.psm")
+abs_proc  = Import("gh:aliclark/phasm-scratch/0.2/proc.psm")
+abs_sys   = Import("gh:aliclark/phasm-scratch/0.2/syscall-linux-x64.psm")
+abs_util  = Import("gh:aliclark/phasm-scratch/0.2/util.psm")
+abs_hello = Import("gh:aliclark/phasm-scratch/0.2/hello.psm")
 
 asm  = abs_asm(std)
 elf  = abs_elf(std)
