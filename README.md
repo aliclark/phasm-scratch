@@ -1,4 +1,4 @@
 # phasm-scratch
-Some initial module and library code and a test program for Phasm.
+An initial "standard library" for phasm programs.
 
-Please see https://github.com/aliclark/phasm for the compiler.
+See https://github.com/aliclark/phasm for the compiler and more info.
