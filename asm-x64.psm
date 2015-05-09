@@ -19,6 +19,20 @@
 
     retq = b(0xc3)
 
+    j_i8_common = (op) -> (dest) -> {
+        b(op); i8(num.subtract(dest, curpos))
+        :curpos:
+    }
+
+    je_i8  = j_i8_common(0x74)
+
+    # FIXME: the evaluation code is broken, seems to remember the 0x74
+    #jne_i8 = j_i8_common(0x75)
+
+    jne_i8 = (dest) -> {
+        b(0x75); i8(num.subtract(dest, curpos))
+        :curpos:
+    }
     jge_i8 = (dest) -> {
         b(0x7d); i8(num.subtract(dest, curpos))
         :curpos:
