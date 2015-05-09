@@ -106,6 +106,8 @@ def builtin_mov(dx, sx):
             return e_bin_raw(5, [0x48, 0x89, 0xe5, nop, nop])
         if dx['data'] == 'rsp' and sx['data'] == 'rbp':
             return e_bin_raw(5, [0x48, 0x89, 0xec, nop, nop])
+        if dx['data'] == 'rdx' and sx['data'] == 'rax':
+            return e_bin_raw(3, [0x48, 0x89, 0xc2])
 
         m = rbp_arg.match(sx['data'])
         if m:
@@ -124,7 +126,7 @@ def builtin_mov(dx, sx):
             raise Exception("Unknown mov register " + str(dx))
         return e_bin_raw(5, [mov_reg[dx['data']]] + src['data'])
 
-    raise Exception("Unknown mov type")
+    raise Exception("Unknown mov type: " + str(sx['data']) + " -> " + str(dx['data']))
 
 push_reg = {
     'rax': 0x50,
