@@ -37,8 +37,8 @@
         asm.mov("rax", 0)
 
         :loop:
-        asm.cmp_rax_s8(n)
-        asm.jge_s8(end)
+        asm.cmp_rax_i8(n)
+        asm.jge_i8(end)
 
         asm.push("rax")
 
@@ -46,8 +46,8 @@
 
         asm.pop("rax")
 
-        asm.add_rax_s8(1)
-        asm.jmp_s8(loop)
+        asm.add_rax_i8(1)
+        asm.jmp_i8(loop)
 
         :end:
     }
