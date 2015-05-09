@@ -1,8 +1,11 @@
 (bin, asm) -> {
     sys_exit  = 1
+    sys_read  = 3
     sys_write = 4
 
+    fd_stdin  = 0
     fd_stdout = 1
+    fd_stderr = 2
 
     call = (num) -> {
         asm.mov("rax", num)
@@ -23,6 +26,9 @@
 
     exit = (status) -> {
         call1(sys_exit, status)
+    }
+    read = (fd, address, length) -> {
+        call3(sys_read, fd, address, length)
     }
     write = (fd, address, length) -> {
         call3(sys_write, fd, address, length)
