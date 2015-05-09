@@ -1,4 +1,4 @@
-(std, asm) -> {
+(bin, asm) -> {
     sys_exit  = 1
     sys_write = 4
 
@@ -6,7 +6,7 @@
 
     call = (num) -> {
         asm.mov("rax", num)
-        std.Bin(2, "cd 80")
+        bin.bin(2, "cd 80")
     }
 
     call1 = (num, v1) -> {

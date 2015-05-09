@@ -1,6 +1,4 @@
-
 (asm) -> {
-
     # the caller prologue just saves registers that might be trashed.
     caller_prologue = {
 	#asm.push("rdx")
@@ -19,7 +17,7 @@
 
     call0 = (addr) -> {
         caller_prologue()
-	asm.callq_s32(addr)
+	asm.callq_i32(addr)
         caller_epilogue()
     }
 
@@ -27,8 +25,8 @@
         caller_prologue()
 
 	asm.pushq(v1)
-	asm.callq_s32(addr)
-        asm.add_rsp_s8(8)
+	asm.callq_i32(addr)
+        asm.add_rsp_i8(8)
 
         caller_epilogue()
     }
@@ -38,8 +36,8 @@
 
 	asm.push(v2)
 	asm.push(v1)
-	asm.callq_s32(addr)
-        asm.add_rsp_s8(16)
+	asm.callq_i32(addr)
+        asm.add_rsp_i8(16)
 
         caller_epilogue()
     }
@@ -51,7 +49,7 @@
 	asm.push(v2)
 	asm.push(v1)
 	asm.call(addr)
-        asm.add_rsp_s8(24)
+        asm.add_rsp_i8(24)
 
         caller_epilogue()
     }
@@ -87,5 +85,9 @@
 
     # XXX: Hopefully in future I can supply a "call" method on here
     # that knows we take 2 args
-    sub2 = sub
+    sub2 = (code) -> {
+        start()
+        code("[rbp+16]", "[rbp+24]")
+        ret()
+    }
 }
