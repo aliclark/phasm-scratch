@@ -25,6 +25,9 @@
     }
 "
 
+    # to use a block's labels as 0-indexed offsets
+    type = (block) -> WithPosition(0, block)
+
     print = (address, size) -> {
         sys.write(sys.fd_stdout, address, size)
     }

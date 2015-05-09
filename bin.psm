@@ -3,6 +3,8 @@
     signed   = bin_base.signed
     bin      = bin_base.bin
 
+    bytes = (n) -> unsigned(n, 0)
+
     u8  = (x) -> unsigned(1, x)
     u16 = (x) -> unsigned(2, x)
     u32 = (x) -> unsigned(4, x)
