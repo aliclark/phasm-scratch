@@ -30,6 +30,7 @@
         openbsd = 0x0C
         openvms = 0x0D
         nsk     = 0x0E
+        standalone = 0xFF
     }
     et = {
         none = 0
@@ -37,6 +38,10 @@
         exec = 2
         dyn  = 3
         core = 4
+        loos   = 0xFE00
+        hios   = 0xFEFF
+        loproc = 0xFF00
+        hiproc = 0xFFFF
     }
     machine = {
         sparc   = 0x02
@@ -70,6 +75,51 @@
         maskos   = 0x00FF0000
         maskproc = 0xFF000000
     }
+    program_header_entry = (phe) -> {
+        bin.u32(phe.type)
+        bin.u32(phe.flags)
+        bin.u64(phe.offset)
+        bin.u64(phe.vaddr)
+        bin.u64(phe.paddr)
+        bin.u64(phe.filesz)
+        bin.u64(phe.memsz)
+        bin.u64(phe.align)
+    }
+
+    shn = {
+        undef  = 0
+        loproc = 0xFF00
+        hiproc = 0xFF1F
+        loos   = 0xFF20
+        hios   = 0xFF3F
+        abs    = 0xFFF1
+        common = 0xFFF2
+    }
+    sht = {
+        null = 0
+        progbits = 1
+        symtab = 2
+        strtab = 3
+        rela = 4
+        hash = 5
+        dynamic = 6
+        note = 7
+        nobits = 8
+        rel = 9
+        shlib = 10
+        dynsym = 11
+        loos   = 0x60000000
+        hios   = 0x6FFFFFFF
+        loproc = 0x70000000
+        hiproc = 0x7FFFFFFF
+    }
+    shf = {
+        write = 0x1
+        alloc = 0x2
+        execinstr = 0x4
+        maskos   = 0x0F000000
+        maskproc = 0xF0000000
+    }
 
     # TODO: noexec stack
     # TODO: sections, should have:
@@ -78,6 +128,19 @@
     # rw- data
     # rw- bss
     # r-- rodata
+
+    section_header_entry = (she) -> {
+        bin.u32(she.name)
+        bin.u32(she.type)
+        bin.u64(she.flags)
+        bin.u64(she.addr)
+        bin.u64(she.offset)
+        bin.u64(she.size)
+        bin.u32(she.link)
+        bin.u32(she.info)
+        bin.u64(she.addralign)
+        bin.u64(she.entsize)
+    }
 
     # Thanks to muppetlabs.com for the Whirlwind Tutorial on Creating
     # Really Teensy ELF Executables for Linux :)
