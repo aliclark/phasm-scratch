@@ -1,4 +1,4 @@
-(bin_base) -> {
+(bin_base, num) -> {
     unsigned = bin_base.unsigned
     signed   = bin_base.signed
     bin      = bin_base.bin
@@ -14,4 +14,13 @@
     i16 = (x) -> signed(2, x)
     i32 = (x) -> signed(4, x)
     i64 = (x) -> signed(8, x)
+
+    sizeof = (x) -> {
+        mapped = WithPosition(0, {
+            :start:
+            x
+            :end:
+        })
+        num.subtract(mapped.end, mapped.start)
+    }
 }
