@@ -84,6 +84,14 @@
     }
 
     # XXX: Hopefully in future I can supply a "call" method on here
+    # that knows we take 1 arg
+    sub1 = (code) -> {
+        start()
+        code("[rbp+16]")
+        ret()
+    }
+
+    # XXX: Hopefully in future I can supply a "call" method on here
     # that knows we take 2 args
     sub2 = (code) -> {
         start()
