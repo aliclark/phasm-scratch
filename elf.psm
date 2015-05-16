@@ -145,14 +145,22 @@
     # Thanks to muppetlabs.com for the Whirlwind Tutorial on Creating
     # Really Teensy ELF Executables for Linux :)
     linux_x64 = (rodata, data, bss, text) -> {
-        mem_offset = 0x00400000
+        rx_segment_addr = 0x00400000
+        rw_segment_addr = 0x00600000
         binsize = num.subtract(end, beginning)
 
-        repositioned_rodata = WithPosition(num.add(mem_offset, rodata_offset), rodata)
-        repositioned_data   = WithPosition(num.add(mem_offset, data_offset),   data)
-        repositioned_bss    = WithPosition(num.add(mem_offset, bss_offset),    bss)
-        repositioned_text   = WithPosition(num.add(mem_offset, text_offset),
-                                           text(repositioned_rodata, repositioned_data, repositioned_bss))
+        text_addr   = num.add(rx_segment_addr, text_offset)
+        rodata_addr = num.add(rx_segment_addr, rodata_offset)
+        data_addr   = num.add(rw_segment_addr, data_offset)
+        bss_addr    = num.add(rw_segment_addr, bss_offset)
+
+        repositioned_data   = WithPosition(data_addr,   data)
+        repositioned_bss    = WithPosition(bss_addr,    bss)
+        repositioned_rodata = WithPosition(rodata_addr, rodata)
+        repositioned_text   = WithPosition(text_addr,
+                                           text(repositioned_rodata,
+                                                repositioned_data,
+                                                repositioned_bss))
 
         ei_mag0       = 0x7F
         ei_mag        = "ELF"
@@ -168,23 +176,14 @@
         e_version   = ei_version
         e_entry     = repositioned_text.start
         e_phoff     = num.subtract(phdr, beginning)
-        e_shoff     = 0
+        e_shoff     = num.subtract(shdr, beginning)
         e_flags     = 0
-        e_ehdrsize  = num.subtract(phdr, ehdr)
-        e_phdrsize  = num.subtract(rest, phdr)
-        e_phnum     = 1
-        e_shentsize = 0
-        e_shnum     = 0
-        e_shstrndx  = 0
-
-        p_type   = pt.load
-        p_offset = 0
-        p_vaddr  = mem_offset
-        p_paddr  = mem_offset
-        p_filesz = binsize
-        p_memsz  = binsize
-        p_flags  = num.add(pf.x, pf.r)
-        p_align  = 0x1000
+        e_ehsize    = num.subtract(phdr, ehdr)
+        e_phentsize = num.subtract(phdr_after_first, phdr)
+        e_phnum     = 2
+        e_shentsize = num.subtract(shdr_after_first, shdr)
+        e_shnum     = 6
+        e_shstrndx  = 5 # .shstrtab
 
         :beginning:
         :ehdr:
@@ -204,41 +203,88 @@
         bin.u64(e_phoff)
         bin.u64(e_shoff)
         bin.u32(e_flags)
-        bin.u16(e_ehdrsize)
-        bin.u16(e_phdrsize)
+        bin.u16(e_ehsize)
+        bin.u16(e_phentsize)
         bin.u16(e_phnum)
         bin.u16(e_shentsize)
         bin.u16(e_shnum)
         bin.u16(e_shstrndx)
 
         :phdr:
-        bin.u32(p_type)
-        bin.u64(p_flags)
-        bin.u32(p_offset)
-        bin.u64(p_vaddr)
-        bin.u64(p_paddr)
-        bin.u64(p_filesz)
-        bin.u64(p_memsz)
-        bin.u64(p_align)
+        # what's a pt.phdr? do i need one?
+        # could offset be text_offset instead of 0?
+        program_header_entry({type=pt.load; offset=0;
+                              vaddr=rx_segment_addr; paddr=rx_segment_addr;
+                              filesz=binsize; memsz=binsize;
+                              flags=num.add(pf.x, pf.r); align=0x200000})
+        :phdr_after_first:
+
+        # add rodata as pf.r?
+
+        program_header_entry({type=pt.load; offset=rodata_offset;
+                              vaddr=num.add(rw_segment_addr, rodata_offset);
+                              paddr=num.add(rw_segment_addr, rodata_offset);
+                              filesz=num.subtract(shstrtab, rodata_offset);
+                              memsz=num.add(num.subtract(shstrtab, rodata_offset),
+                                            bin.sizeof(bss));
+                              flags=num.add(pf.w, pf.r); align=0x200000})
 
         :rest:
 
         :text_offset:
         repositioned_text()
 
-        # FIXME: put these in actual sections
         :rodata_offset:
         rodata()
 
         :data_offset:
         data()
 
-        # TODO: properly
         :bss_offset:
-        bss()
+        # nobits
+
+        :shstrtab:
+        str.ascii(1,  "\0") # first string is null
+        str.ascii(6,  ".text\0")
+        str.ascii(8,  ".rodata\0")
+        str.ascii(6,  ".data\0")
+        str.ascii(5,  ".bss\0")
+        str.ascii(10, ".shstrtab\0")
 
         :shdr:
-        # TODO: section data here
+        # first section header is all null
+        section_header_entry({name=0; type=sht.null;
+                              flags=0; addr=0; offset=0; size=0;
+                              link=shn.undef; info=0; addralign=0; entsize=0})
+        :shdr_after_first:
+
+        section_header_entry({name=1; type=sht.progbits;
+                              flags=num.add(shf.alloc, shf.execinstr);
+                              addr=text_addr; offset=text_offset;
+                              size=num.subtract(rodata_offset, text_offset);
+                              link=shn.undef; info=0; addralign=16; entsize=0})
+
+        section_header_entry({name=7; type=sht.progbits; flags=shf.alloc;
+                              addr=rodata_addr; offset=rodata_offset;
+                              size=num.subtract(data_offset, rodata_offset);
+                              link=shn.undef; info=0; addralign=32; entsize=0})
+
+        section_header_entry({name=15; type=sht.progbits;
+                              flags=num.add(shf.alloc, shf.write);
+                              addr=data_addr; offset=data_offset;
+                              size=num.subtract(bss_offset, data_offset);
+                              link=shn.undef; info=0; addralign=32; entsize=0})
+
+        section_header_entry({name=21; type=sht.nobits;
+                              flags=num.add(shf.alloc, shf.write);
+                              addr=bss_addr; offset=bss_offset;
+                              size=bin.sizeof(bss);
+                              link=shn.undef; info=0; addralign=32; entsize=0})
+
+        section_header_entry({name=26; type=sht.strtab; flags=0;
+                              addr=0; offset=shstrtab;
+                              size=num.subtract(shdr, shstrtab);
+                              link=shn.undef; info=0; addralign=1; entsize=0})
 
         :end:
 
